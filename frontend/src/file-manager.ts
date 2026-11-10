@@ -557,7 +557,21 @@ export class FileManager {
   }
 
   async upload(file: File, destination?: string): Promise<void> {
-    if (!this.ready || this.hasTransfer() || this.uploadConfirmationPending) return;
+    if (!this.ready) {
+      // 通道未就绪时静默丢弃会让用户选中的文件凭空消失，必须给出可见反馈。
+      this.showError(this.localize({
+        zh: '尚未连接到服务器，请先连接后再上传文件。',
+        en: 'Not connected to a server yet. Connect before uploading files.',
+      }));
+      return;
+    }
+    if (this.hasTransfer() || this.uploadConfirmationPending) {
+      this.showError(this.localize({
+        zh: '已有文件传输进行中，请等待完成后再上传。',
+        en: 'A file transfer is already in progress. Wait for it to finish before uploading.',
+      }));
+      return;
+    }
     if (file.size > MAX_SFTP_UPLOAD_SIZE) {
       this.showError(this.localize({ zh: '上传文件不能超过 2 GiB。', en: 'Uploads cannot exceed 2 GiB.' }));
       return;

@@ -44,6 +44,8 @@ test('切换到 Agent CLI 不断开 SSH，返回文件页仍使用原会话', as
 test('文件传输期间拒绝离页会保留当前视图', async ({ page }) => {
   await fileFixture(page, { holdUpload: true });
   await connectFiles(page);
+  // SFTP 通道就绪前选择文件会被丢弃，这里先等上传按钮可用再触发上传。
+  await expect(page.locator('#file-upload')).toBeEnabled();
   await page.locator('#file-upload-input').setInputFiles({ name: 'fixture.txt', mimeType: 'text/plain', buffer: Buffer.from('fixture') });
   await expect(page.locator('#file-manager-progress')).toBeVisible();
   page.once('dialog', (dialog) => dialog.dismiss());

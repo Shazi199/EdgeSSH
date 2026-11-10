@@ -217,6 +217,15 @@ test('上传与下载校验实际字节', async ({ page }) => {
   expect(await readFile((await download.path())!, 'utf8')).toBe('hello files\n');
 });
 
+test('通道未就绪时选择文件会给出提示，不会静默丢弃', async ({ page }) => {
+  const fixture = await fileFixture(page);
+  await expect(page.locator('#file-upload')).toBeDisabled();
+  await page.locator('#file-upload-input').setInputFiles({ name: 'early.txt', mimeType: 'text/plain', buffer: Buffer.from('early') });
+  await expect(page.locator('#file-manager-error')).toContainText('尚未连接到服务器');
+  await expect(page.locator('#file-manager-progress')).toBeHidden();
+  expect(fixture.calls.some((call) => call.type === 'sftp_upload_start')).toBe(false);
+});
+
 test('更换主机清理旧会话，文件页继续可操作', async ({ page }) => {
   const fixture = await fileFixture(page);
   await connectFiles(page);
